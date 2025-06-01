@@ -1,5 +1,6 @@
 package com.vishnu.springai.openai_demo.text;
 
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,7 +14,7 @@ import com.vishnu.springai.openai_demo.services.OpenAiService;
 public class AnswerAnyThingController {
 
     @Autowired
-    private OpenAiService chatService;
+    private OpenAiService service;
 
     @GetMapping("/showAskAnything")
     public String showAskAnything() {
@@ -22,7 +23,10 @@ public class AnswerAnyThingController {
 
     @PostMapping("/askAnything")
     public String askAnything(@RequestParam("question") String question, Model model) {
-
+        ChatResponse answer = service.generateResponse(question);
+        System.out.println("Response: " + answer.getResult().getOutput().getText());
+        model.addAttribute("question", question);
+        model.addAttribute("answer", answer.getResult().getOutput().getText());
         return "askAnything";
     }
 }
