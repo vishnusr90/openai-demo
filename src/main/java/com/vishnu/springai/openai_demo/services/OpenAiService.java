@@ -10,7 +10,10 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +26,9 @@ public class OpenAiService {
 
     @Autowired
     private EmbeddingModel embeddingModel;
+
+    @Autowired
+    private VectorStore vectorStore;
 
     public OpenAiService(ChatClient.Builder builder) {
         ChatMemory chatMemory = MessageWindowChatMemory.builder().build();
@@ -75,6 +81,14 @@ public class OpenAiService {
 
     public float[] embed(String text) {
         return embeddingModel.embed(text);
+    }
+
+    public List<Document> searchJobs(String query) {
+        // return vectorStore.similaritySearch(query);
+        return vectorStore.similaritySearch(SearchRequest.builder()
+                .query(query)
+                .topK(3)
+                .build());
     }
 
     public double findSimilarity(String text1, String text2) {
