@@ -20,9 +20,15 @@ public class CuisineHelperController {
     }
 
     @PostMapping("/cuisineHelper")
-    public String getChatResponse(@RequestParam("country") String country,
-            @RequestParam("numCuisines") String numCuisines, @RequestParam("language") String language, Model model) {
+    public String getChatResponse(
+            @RequestParam("country") String country,
+            @RequestParam("numCuisines") String numCuisines,
+            @RequestParam("language") String language,
+            Model model) {
 
+        CountryCuisines countryCuisines = chatService.getCuisines(country, numCuisines, language);
+        countryCuisines.cuisines().forEach(r -> System.out.println(r));
+        model.addAttribute("countryCuisines", countryCuisines);
         return "cuisineHelper";
     }
 }
