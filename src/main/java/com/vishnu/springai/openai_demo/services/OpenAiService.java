@@ -1,5 +1,6 @@
 package com.vishnu.springai.openai_demo.services;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.ai.chat.client.ChatClient;
@@ -9,6 +10,8 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.vishnu.springai.openai_demo.text.prompttemplate.CountryCuisines;
@@ -17,6 +20,9 @@ import com.vishnu.springai.openai_demo.text.prompttemplate.CountryCuisines;
 public class OpenAiService {
 
     private final ChatClient chatClient;
+
+    @Autowired
+    private EmbeddingModel embeddingModel;
 
     public OpenAiService(ChatClient.Builder builder) {
         ChatMemory chatMemory = MessageWindowChatMemory.builder().build();
@@ -41,10 +47,10 @@ public class OpenAiService {
                 "3. Cultural experiences: " +
                 "4. Useful phrases in {language}: " +
                 "5. Tips for travelling on a {budget} budget: ");
-        Prompt promt = promptTemplate
+        Prompt prompt = promptTemplate
                 .create(Map.of("city", city, "month", month, "language", language, "budget", budget));
         return chatClient
-                .prompt(promt)
+                .prompt(prompt)
                 .call()
                 .chatResponse().getResult().getOutput().getText();
     }
@@ -65,5 +71,37 @@ public class OpenAiService {
                 .prompt(prompt)
                 .call()
                 .entity(CountryCuisines.class);
+    }
+
+    public float[] embed(String text) {
+        return embeddingModel.embed(text);
+    }
+
+    public double findSimilarity(String text1, String text2) {
+        List<float[]> response = embeddingModel
+                .embed(List.of(text1, text2));
+        // invoke cosine similarity
+        return cosineSimilarity(response.get(0), response.get(1));
+    }
+
+    private double cosineSimilarity(float[] vectorA, float[] vectorB) {
+        if (vectorA.length != vectorB.length) {
+            throw new IllegalArgumentException("Vectors must be of the same length");
+        }
+        double dotProduct = 0.0;
+        double normA = 0.0;
+        double normB = 0.0;
+
+        for (int i = 0; i < vectorA.length; i++) {
+            dotProduct += vectorA[i] * vectorB[i];
+            normA += Math.pow(vectorA[i], 2);
+            normB += Math.pow(vectorB[i], 2);
+        }
+
+        if (normA == 0 || normB == 0) {
+            return 0.0; // Avoid division by zero
+        }
+
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
     }
 }
